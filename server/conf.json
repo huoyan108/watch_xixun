@@ -1,0 +1,18 @@
+{  
+	"NsqConfig":{  
+		"Addr":"192.168.2.66:4150",
+			"UpTopicManager":"das2dcsmanager",
+			"UpTopicLoction":"das2dcslocation",
+			"UpTopicControl":"das2dcscontrol",
+			"DownTopicManager":"dcs2dasmanager",
+			"DownchannelManager":"ch"
+	},
+	"ServerConfig":{
+		"BindPort":"9090",
+		"ReadLimit":300,
+		"WriteLimit":30000,
+		"ConnTimeout":300,
+		"ConnCheckInterval":30,
+		"ServerStatistics":300
+	}
+}

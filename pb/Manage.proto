@@ -1,0 +1,24 @@
+syntax="proto3";
+package Report;
+
+message ManageProtocol {
+	enum ManageType {
+		REG    = 0;		// 注册
+		LOGIN  = 1;		// 登录（鉴权）
+		LOGOUT = 2;		// 退出
+		CANCEL = 3;		// 注销
+	}
+	enum ResultType {
+		SUCCESS		= 0;	// 成功
+		ARREARAGE	= 1;	// 欠费
+		INVALID		= 2;	// 非法用户
+	}
+	
+	string time_req			= 1;	// 请求时间
+	string serial_number	= 2;	// 流水号
+	string tid				= 3;	// 终端标识
+	ManageType type		= 4;	// 终端管理类型
+	ResultType	result 		= 5;	// 应答结果类型
+	string terminalType	= 6;	// 终端类型(默认watch）
+	string protocolType		= 7;	// 协议类型(默认xixun)
+}

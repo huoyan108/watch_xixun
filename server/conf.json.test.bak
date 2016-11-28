@@ -1,0 +1,17 @@
+{  
+	"ServerConfig":{
+		"ReadLimit":3000000,
+		"WriteLimit":3000000,
+		"ConnTimeout":5,
+		"ConnCheckInterval":60,
+		"ServerStatistics":10,
+		"BindPort":"10054"
+	},
+	"DBConfig":{
+		"Host":"192.168.2.143",
+        "Port":"5432",
+        "User":"postgres",
+        "Passwd":"postgres",
+        "Dbname":"community"
+	}
+}

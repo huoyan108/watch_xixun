@@ -1,0 +1,55 @@
+syntax="proto3";
+package Report;
+
+
+message Command {
+    enum CommandType {
+        //comman
+        CMT_INVALID          = 0x0000;  // 非法
+        CMT_REP              = 0x8000;  //指令的应答
+
+        // up message
+        CMT_WARNUP          = 0x0102;   //告警
+        CMT_READMSG         = 0x0103;   //读取信息
+        CMT_CONN_CHARGER    = 0x0104;   //连接充电器
+
+        // down message
+        CMT_POSP            = 0x8110;   //定位指令
+        CMT_POS_INTERVAL    = 0x8111;   //定位间隔
+        CMT_RT_OFF          = 0X8112;   //重启关机
+        CMT_SERVER_SET      = 0x8113;   //终端设置服务器IP端口
+        CMT_UPDATE          = 0X8114;    //终端升级
+        CMT_SENDMSG         = 0X8115;   //发送文字信息
+        CMT_INIT            = 0X8116;   //初始化表带
+        CMT_SET_IMEI        = 0X8117;   //设置IMEI
+    }
+    CommandType type = 1;
+
+    message Param {
+        enum ParaType {
+            Null   = 0x00;
+            INT8   = 0x01;
+            INT16  = 0x02;
+            INT32  = 0x03;
+            INT64  = 0x04;
+            FLOAT  = 0x10;
+            DOUBLE = 0x11;
+            STRING = 0x20;
+            BYTES  = 0x21;
+        }
+        ParaType type = 1;
+        int64  npara  = 2;
+        double dpara  = 3;
+        string strpara= 4;
+        bytes  bpara  = 5;
+    }
+    repeated Param paras = 2;
+}
+
+message ControlProtocol {
+
+    string   time_req = 1;
+    string  serial_number = 2;
+    string  tid = 3;
+    Command command = 4;
+}

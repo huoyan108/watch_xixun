@@ -1,0 +1,82 @@
+syntax="proto3";
+package Report;
+
+
+// 84坐标信息
+message WGS84 {
+    int32 lng_e6 = 1; 
+    int32 lat_e6 = 2;
+    int32 speed = 3 ;
+    int32 degree = 4;
+    int32 precision = 5;
+    int32 altitude = 6 ;//海拔
+}
+
+// 02坐标信息
+message GCJ02 {
+    int32 lng_e6 = 1;
+    int32 lat_e6 = 2;
+    int32 altitude = 5;
+}
+
+// 基站定位信息
+message MobileCell {
+    int32 mcc = 1 ;
+    int32 mnc = 2;
+    int32 lac = 3;
+    int32 cellid = 4;
+
+    int32 ss = 5; // radio signal strength measured in dBm.
+
+    string jzxx = 6;  //全部基站信息
+}
+
+// wifi定位信息
+message Wifi {
+    int32 mcc = 1 ;
+    int32 addr = 2;
+    int32 strength = 3;
+    string wifixx = 4;   //全部wifi信息
+}
+
+
+// 定位信息
+message Location {
+    // 位置坐标类型
+    enum LocationType {
+        EWGS84     = 0;	// 84坐标类型
+        EGCJ02     = 1;	// 02坐标类型
+        EMobileCell= 2;	// 基站信息类型
+        EWifi      = 3;	// wifi定位
+    }
+    // 位置信息来源
+    enum FromType {
+        ETerminal = 0;	// 来自平台
+        EPlatform = 1;	// 来自终端
+    }
+    LocationType locationtype= 1;
+    FromType     from        = 2;
+    WGS84 wgs84 = 3;
+    GCJ02 gcj02 = 4;
+    repeated MobileCell cells = 5;
+    repeated Wifi wifis = 6;
+}
+
+// 扩展信息
+message MobileLocationData {
+    int32   battery        = 1;
+    int32 charge          = 2 ; //充电
+
+    //被监护人终端上报位置的原因(0=定位上报“DW”
+    //1=定位频度位置上报)；
+    int32   reason        = 3;
+}
+
+// 终端位置信息
+message LocationProtocol {
+    string time_req			= 1;	// 请求时间
+    string   serial_number = 2;
+    string  tid           = 3;
+    repeated Location   locations  = 4;	    //定位信息
+    MobileLocationData  mld = 5;   //定位附加信息
+}
