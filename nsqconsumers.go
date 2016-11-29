@@ -27,9 +27,13 @@ func (s *NsqConsumers) MakeNewConsumer(topic string) bool {
 		Addr:    s.nsqConsumerConfig.Addr,
 		Channel: s.nsqConsumerConfig.Channel,
 	}
+	server := s.serversMap[topic]
+	if server != nil {
+		log.Println("MakeNewConsumer has", topic)
+		//return false
+	}
 
-	//s.nsqConsumerConfig.Topic = topic
-	server := NewNsqConsumer(newConfig, Consumer_Control)
+	server = NewNsqConsumer(newConfig, Consumer_Control)
 	if server == nil {
 		return false
 	}

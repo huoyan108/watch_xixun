@@ -84,6 +84,6 @@ func (s *NsqConsumer) Stop() {
 		log.Printf("stop consumer error ", errmsg.Error())
 	}
 
-	//s.consumer.Stop()
+	//	s.consumer.Stop()
 	log.Println("stop consumer3")
 }
