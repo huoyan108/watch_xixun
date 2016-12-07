@@ -1,7 +1,7 @@
 package watch_xixun
 
 import (
-	"log"
+	"github.com/huoyan108/logs"
 )
 
 type NsqConsumers struct {
@@ -22,6 +22,7 @@ func NewNsqConsumers(nsqConsumerConfig *NsqConsumerConfig) *NsqConsumers {
 	return GNsqConsumers
 }
 func (s *NsqConsumers) MakeNewConsumer(topic string) bool {
+	defer logs.Logger.Flush()
 	newConfig := &NsqConsumerConfig{
 		Topic:   topic,
 		Addr:    s.nsqConsumerConfig.Addr,
@@ -29,25 +30,26 @@ func (s *NsqConsumers) MakeNewConsumer(topic string) bool {
 	}
 	server := s.serversMap[topic]
 	if server != nil {
-		log.Println("MakeNewConsumer has", topic)
-		//return false
+		logs.Logger.Info("has ", topic, " cann't make new consumer")
+		return false
 	}
 
 	server = NewNsqConsumer(newConfig, Consumer_Control)
 	if server == nil {
+		logs.Logger.Info("make new consumer error,topic:", topic)
 		return false
 	}
+	logs.Logger.Info("make new consumer sucess,topic:", topic)
 	server.Start()
 	s.serversMap[topic] = server
+	logs.Logger.Info("make new consumer sucess,topic:", topic)
 	return true
 }
 func (s *NsqConsumers) DelConsumer(topic string) {
-	log.Println("delconsumer")
 	server := s.serversMap[topic]
 	if server != nil {
 		server.Stop()
-		log.Println("delconsumer1")
 		delete(s.serversMap, topic)
-		log.Println("delconsumer2")
+		logs.Logger.Info("stop consumer commplete,topic:", topic)
 	}
 }

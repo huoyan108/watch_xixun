@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/giskook/gotcp"
+	"github.com/huoyan108/gotcp"
+	"github.com/huoyan108/logs"
 	"github.com/huoyan108/watch_xixun"
 	"log"
 	"net"
@@ -15,11 +16,19 @@ import (
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	//init log
+	logs.SetLogConf("./seelog.xml")
+	defer logs.Logger.Flush()
+
 	// read configuration
 	configuration, err := watch_xixun.ReadConfig("./conf.json")
 	watch_xixun.SetConfiguration(configuration)
-
 	checkError(err)
+
+	//init redis client
+	redisoper := watch_xixun.NewRedisOper(configuration.RedisConfig.ServerInfo, configuration.RedisConfig.RedisMatch)
+	go redisoper.Start()
+
 	// creates a tcp listener
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", ":"+configuration.ServerConfig.BindPort)
 	checkError(err)
@@ -40,7 +49,7 @@ func main() {
 		Addr:  configuration.NsqConfig.Addr,
 		Topic: configuration.NsqConfig.UpTopicManager,
 	}
-	log.Println(configuration.NsqConfig)
+	logs.Logger.Info(configuration.NsqConfig)
 	nsqpserverManager := watch_xixun.NewNsqProducer(nsqpconfigManager)
 	//Loction
 	nsqpconfigLoctionLoction := &watch_xixun.NsqProducerConfig{
@@ -83,6 +92,7 @@ func main() {
 	fmt.Println("Signal: ", <-chSig)
 
 	// stops service
+	redisoper.Stop()
 	watch_xixunserver.Stop()
 }
 

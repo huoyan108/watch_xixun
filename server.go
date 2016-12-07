@@ -1,10 +1,8 @@
 package watch_xixun
 
 import (
-	"github.com/giskook/gotcp"
-	//"github.com/huoyan108/watch_xixun/nsq"
-	//"github.com/huoyan108/watch_xixun"
-	"log"
+	"github.com/huoyan108/gotcp"
+	"github.com/huoyan108/logs"
 	"net"
 	"time"
 )
@@ -15,17 +13,15 @@ type ServerConfig struct {
 }
 
 type Server struct {
-	config           *ServerConfig
-	srv              *gotcp.Server
-	checkconnsticker *time.Ticker
-	//	Dbsrv            *DbServer
+	config              *ServerConfig
+	srv                 *gotcp.Server
+	checkconnsticker    *time.Ticker
 	nsqpserverManager   *NsqProducer
 	nsqpserverLoction   *NsqProducer
 	nsqpserverControlcb *NsqProducer
 	nsqcserverManager   *NsqConsumer
-	//nsqcserverControl   *[]NsqConsumer
-	nsqConsumerConfig *NsqConsumerConfig
-	nsqConsumers      *NsqConsumers
+	nsqConsumerConfig   *NsqConsumerConfig
+	nsqConsumers        *NsqConsumers
 }
 
 var Gserver *Server
@@ -41,10 +37,9 @@ func NewServer(srv *gotcp.Server, config *ServerConfig, nsqpserverManager *NsqPr
 	nsqConsumerConfig *NsqConsumerConfig) *Server {
 	serverstatistics := GetConfiguration().GetServerStatistics()
 	return &Server{
-		config:           config,
-		srv:              srv,
-		checkconnsticker: time.NewTicker(time.Duration(serverstatistics) * time.Second),
-		//	Dbsrv:            dbsrv,
+		config:              config,
+		srv:                 srv,
+		checkconnsticker:    time.NewTicker(time.Duration(serverstatistics) * time.Second),
 		nsqpserverManager:   nsqpserverManager,
 		nsqpserverLoction:   nsqpserverLoction,
 		nsqpserverControlcb: nsqpserverControlcb,
@@ -70,15 +65,6 @@ func (s *Server) GetConsumerManager() *NsqConsumer {
 	return s.nsqcserverManager
 }
 
-//func (s *Server) GetProducerManagerTopic() string {
-//	return s.config.UptopicManager
-//}
-//func (s *Server) GetProducerLocationTopic() string {
-//	return s.config.UptopicLocation
-//}
-//func (s *Server) GetProducerControlTopic() string {
-//	return s.config.UptopicControl
-//}
 func (s *Server) Start() {
 	go s.checkStatistics()
 	s.nsqpserverManager.Start()
@@ -86,9 +72,6 @@ func (s *Server) Start() {
 	s.nsqpserverControlcb.Start()
 	s.nsqcserverManager.Start()
 	s.srv.Start(s.config.Listener, s.config.AcceptTimeout)
-	//	s.nsqcserverManager.Start()
-	//	s.nsqcserverManager.Stop()
-	//
 }
 
 func (s *Server) Stop() {
@@ -103,6 +86,6 @@ func (s *Server) Stop() {
 func (s *Server) checkStatistics() {
 	for {
 		<-s.checkconnsticker.C
-		log.Printf("---------------------Totol Connections : %d---------------------\n", NewConns().GetCount())
+		logs.Logger.Info("---------------------Totol Connections : ", NewConns().GetCount(), "---------------------")
 	}
 }

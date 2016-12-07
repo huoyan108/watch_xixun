@@ -16,16 +16,22 @@ type NsqConfiguration struct {
 
 type ServerConfiguration struct {
 	BindPort          string
-	ReadLimit         uint16
+	ReadLimit         uint32
 	WriteLimit        uint16
 	ConnTimeout       uint16
 	ConnCheckInterval uint16
 	ServerStatistics  uint16
 }
 
+type RedisConfiguration struct {
+	ServerInfo string
+	RedisMatch string
+}
+
 type Configuration struct {
 	NsqConfig    *NsqConfiguration
 	ServerConfig *ServerConfiguration
+	RedisConfig  *RedisConfiguration
 }
 
 func ReadConfig(confpath string) (*Configuration, error) {
@@ -37,7 +43,7 @@ func ReadConfig(confpath string) (*Configuration, error) {
 	return &configuration, err
 }
 
-func (conf *Configuration) GetServerReadLimit() uint16 {
+func (conf *Configuration) GetServerReadLimit() uint32 {
 	return conf.ServerConfig.ReadLimit
 }
 

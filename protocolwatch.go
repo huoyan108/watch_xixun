@@ -1,9 +1,9 @@
 package watch_xixun
 
 import (
-	"github.com/giskook/gotcp"
+	"github.com/huoyan108/gotcp"
+	"github.com/huoyan108/logs"
 	"github.com/huoyan108/watch_xixun/protocol"
-	"log"
 )
 
 type ShaPacket struct {
@@ -12,27 +12,31 @@ type ShaPacket struct {
 }
 
 func (this *ShaPacket) Serialize() []byte {
+	//defer logs.Logger.Flush()
+	var data []byte
 	switch this.Type {
 	case protocol.Login:
-		return this.Packet.(*protocol.LoginPacket).Serialize()
+		data = this.Packet.(*protocol.LoginPacket).Serialize()
 	case protocol.HeartBeat:
-		return this.Packet.(*protocol.HeartPacket).Serialize()
+		data = this.Packet.(*protocol.HeartPacket).Serialize()
 	case protocol.PosUp:
-		return this.Packet.(*protocol.PosUpPacket).Serialize()
+		data = this.Packet.(*protocol.PosUpPacket).Serialize()
 	case protocol.Echo:
-		return this.Packet.(*protocol.EchoPacket).Serialize()
+		data = this.Packet.(*protocol.EchoPacket).Serialize()
 	case protocol.WarnUp:
-		return this.Packet.(*protocol.WarnUpPacket).Serialize()
+		data = this.Packet.(*protocol.WarnUpPacket).Serialize()
 	case protocol.Charge:
-		return this.Packet.(*protocol.ChargePacket).Serialize()
+		data = this.Packet.(*protocol.ChargePacket).Serialize()
 	case protocol.ReadMsg:
-		return this.Packet.(*protocol.ReadMsgPacket).Serialize()
+		data = this.Packet.(*protocol.ReadMsgPacket).Serialize()
 	case protocol.ControlCmdRt:
-		return this.Packet.(*protocol.ControlPacket).Serialize()
+		data = this.Packet.(*protocol.ControlPacket).Serialize()
 
 	}
 
-	return nil
+	//var sData string = string(data[:])
+	//logs.Logger.Info("<OUT>", sData)
+	return data
 }
 
 func NewShaPacket(Type uint16, Packet gotcp.Packet) *ShaPacket {
@@ -46,6 +50,7 @@ type ShaProtocol struct {
 }
 
 func (this *ShaProtocol) ReadPacket(c *gotcp.Conn) (gotcp.Packet, error) {
+	defer logs.Logger.Flush()
 	smconn := c.GetExtraData().(*Conn)
 	smconn.UpdateReadflag()
 
@@ -56,16 +61,16 @@ func (this *ShaProtocol) ReadPacket(c *gotcp.Conn) (gotcp.Packet, error) {
 		if smconn.ReadMore {
 			data := make([]byte, 2048)
 			readLengh, err := conn.Read(data)
-			log.Printf("<IN>    %s\n", data[0:readLengh])
 			if err != nil {
-				return nil, nil
 				return nil, err
 			}
 
 			if readLengh == 0 {
-				log.Println("ReadPacket readLengh==0")
+				logs.Logger.Info("ReadPacket readLengh==0")
 				return nil, gotcp.ErrConnClosing
 			}
+			var sData string = string(data[0:readLengh])
+			logs.Logger.Info("<IN>", sData)
 			buffer.Write(data[0:readLengh])
 			smconn.UpdateReadflag()
 		}

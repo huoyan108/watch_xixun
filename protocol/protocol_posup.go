@@ -34,9 +34,23 @@ func (p *PosUpPacket) Serialize() []byte {
 	result += p.SerialNumber
 	result += SEP
 	if p.GPSFlag != "" {
-		result += "1,"
+		if p.Longitude != "" {
+			result += "1,"
+		} else if p.WifiCount > 0 {
+			result += "2,"
+		} else {
+			if p.JzCount > 0 {
+				result += "3,"
+			} else {
+				result += "4,"
+			}
+		}
 	} else {
-		result += "0,"
+		if p.WifiCount > 0 {
+			result += "2,"
+		} else {
+			result += "0,"
+		}
 	}
 	result += p.LocationTime
 	result += SEP

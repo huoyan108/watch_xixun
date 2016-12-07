@@ -2,8 +2,8 @@ package watch_xixun
 
 import (
 	"bytes"
-	"github.com/giskook/gotcp"
-	"log"
+	"github.com/huoyan108/gotcp"
+	"github.com/huoyan108/logs"
 	"time"
 )
 
@@ -73,8 +73,8 @@ func (c *Conn) writeToclientLoop() {
 	}
 }
 
-func (c *Conn) SendToClient(p gotcp.Packet) {
-	c.conn.AsyncWritePacket(p, time.Second)
+func (c *Conn) SendToClient(p gotcp.Packet) error {
+	return c.conn.AsyncWritePacket(p, time.Second)
 }
 
 func (c *Conn) UpdateReadflag() {
@@ -90,19 +90,16 @@ func (c *Conn) checkHeart() {
 		c.conn.Close()
 	}()
 
+	defer logs.Logger.Flush()
 	var now int64
 	for {
 		select {
 		case <-c.ticker.C:
 			now = time.Now().Unix()
 			if now-c.readflag > int64(c.config.ReadLimit) {
-				log.Println("read linmit")
+				logs.Logger.Info("read linmit")
 				return
 			}
-			//			if c.Status == ConnUnauth {
-			//				log.Printf("unauth's gateway gatewayid %x\n", c.ID)
-			//				return
-			//			}
 		case <-c.closeChan:
 			return
 		}

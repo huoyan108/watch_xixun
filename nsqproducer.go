@@ -1,10 +1,8 @@
 package watch_xixun
 
 import (
-	"log"
-	//"sync"
-
 	"github.com/bitly/go-nsq"
+	"github.com/huoyan108/logs"
 )
 
 type NsqProducerConfig struct {
@@ -27,9 +25,13 @@ func NewNsqProducer(config *NsqProducerConfig) *NsqProducer {
 }
 
 func (s *NsqProducer) Send(topic string, value []byte) error {
-	log.Printf("<OUT_NSQ> topic %s %x \n", topic, value)
+	defer logs.Logger.Flush()
+	logs.Logger.Info("<OUT_NSQ> topic:", topic)
 	err := s.producer.PublishAsync(topic, value, nil, nil)
 
+	if err != nil {
+		logs.Logger.Info(topic)
+	}
 	return err
 }
 
@@ -39,7 +41,8 @@ func (s *NsqProducer) Start() {
 		err := recover()
 		//s.waitGroup.Done()
 		if err != nil {
-			log.Println("err found")
+			logs.Logger.Info("err found")
+			logs.Logger.Flush()
 		}
 
 	}()
@@ -50,7 +53,8 @@ func (s *NsqProducer) Start() {
 
 	if errmsg != nil {
 		//	log.Printf("create producer error" + errmsg.Error())
-		panic("create producer error " + errmsg.Error())
+		//panic("create producer error " + errmsg.Error())
+		logs.Logger.Info("create producer error" + errmsg.Error())
 	}
 }
 

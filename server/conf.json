@@ -9,10 +9,14 @@
 	},
 	"ServerConfig":{
 		"BindPort":"9090",
-		"ReadLimit":300,
+		"ReadLimit":6000,
 		"WriteLimit":30000,
 		"ConnTimeout":300,
 		"ConnCheckInterval":30,
 		"ServerStatistics":300
-	}
+	},
+    "RedisConfig":{
+        "ServerInfo":"222.222.218.51:6381",
+        "RedisMatch":"das1"
+    }
 }

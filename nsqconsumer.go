@@ -1,11 +1,10 @@
 package watch_xixun
 
 import (
+	"github.com/bitly/go-nsq"
+	"github.com/huoyan108/logs"
 	"log"
 	"sync"
-
-	"github.com/bitly/go-nsq"
-	//	"github.com/huoyan108/watch_xixun"
 )
 
 const (
@@ -50,11 +49,12 @@ func (s *NsqConsumer) Start() {
 		s.waitGroup.Done()
 		err := recover()
 		if err != nil {
-			log.Println("err found")
+			logs.Logger.Info("err found")
 			s.Stop()
 		}
 
 	}()
+	defer logs.Logger.Flush()
 
 	config := nsq.NewConfig()
 
@@ -62,8 +62,7 @@ func (s *NsqConsumer) Start() {
 	s.consumer, errmsg = nsq.NewConsumer(s.config.Topic, s.config.Channel, config)
 
 	if errmsg != nil {
-		//	panic("create consumer error -> " + errmsg.Error())
-		log.Println("create consumer error -> " + errmsg.Error())
+		logs.Logger.Info("create consumer error -> " + errmsg.Error())
 	}
 	s.recvNsq()
 
@@ -74,10 +73,9 @@ func (s *NsqConsumer) Start() {
 }
 
 func (s *NsqConsumer) Stop() {
-	log.Println("stop consumer")
+	defer logs.Logger.Flush()
 	s.waitGroup.Wait()
-	log.Println("stop consumer2", s.config.Addr)
-
+	logs.Logger.Info("stop consumer,topic:", s.config.Topic)
 	errmsg := s.consumer.DisconnectFromNSQD(s.config.Addr)
 
 	if errmsg != nil {
@@ -85,5 +83,4 @@ func (s *NsqConsumer) Stop() {
 	}
 
 	//	s.consumer.Stop()
-	log.Println("stop consumer3")
 }

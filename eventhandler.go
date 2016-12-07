@@ -1,13 +1,12 @@
 package watch_xixun
 
 import (
-	"github.com/giskook/gotcp"
 	"github.com/golang/protobuf/proto"
+	"github.com/huoyan108/gotcp"
+	"github.com/huoyan108/logs"
 	"github.com/huoyan108/watch_xixun/pbgo"
 	"github.com/huoyan108/watch_xixun/protocol"
-	"log"
 	"strconv"
-	//	"strings"
 	"time"
 )
 
@@ -33,14 +32,16 @@ func (this *Callback) OnConnect(c *gotcp.Conn) bool {
 }
 
 func (this *Callback) OnClose(c *gotcp.Conn) {
+	//defer logs.Logger.Flush()
 	conn := c.GetExtraData().(*Conn)
-	log.Println("Close client all info")
+	//logs.Logger.Info("Close client all info")
 	GetServer().GetNsqConsumers_Control().DelConsumer(conn.IMEI)
 	NewConns().Remove(conn)
 	conn.Close()
 }
 
 func on_login(c *gotcp.Conn, p *ShaPacket) {
+	defer logs.Logger.Flush()
 	conn := c.GetExtraData().(*Conn)
 	loginPkg := p.Packet.(*protocol.LoginPacket)
 	conn.IMEI = loginPkg.IMEI
@@ -59,15 +60,31 @@ func on_login(c *gotcp.Conn, p *ShaPacket) {
 		Tid:          loginPkg.IMEI,
 		Type:         Report.ManageProtocol_LOGIN,
 		TerminalType: "xixun",
-		ProtocolType: "xixun",
+		ProtocolType: loginPkg.ProtocolType,
 	}
-	log.Println("make login proto", req)
+
+	//判断是否更新
+	logs.Logger.Info("login  ", versionName, loginPkg.ProtocolType)
+	if versionName != "" && loginPkg.ProtocolType != "" && versionName != loginPkg.ProtocolType {
+		if downloadLink != "" {
+			//登陆回执
+			c.AsyncWritePacket(p, time.Second)
+			//更新命令
+			time.AfterFunc(2*time.Second, func() {
+				pkg := protocol.SetControlCmd(loginPkg.Encryption, loginPkg.IMEI, loginPkg.SerialNumber, "", "up="+downloadLink)
+				c.AsyncWritePacket(pkg, time.Second)
+			})
+		}
+		return
+	}
+	logs.Logger.Info("make login proto", req)
 	reqdata, _ := proto.Marshal(req)
 	GetServer().GetProducerManager().Send(GetConfiguration().NsqConfig.UpTopicManager, reqdata)
-	log.Println("Send login to Dcs", GetConfiguration().NsqConfig.UpTopicManager)
+	logs.Logger.Info("Send login to Dcs", GetConfiguration().NsqConfig.UpTopicManager)
 }
 
 func on_posup(c *gotcp.Conn, p *ShaPacket) {
+	defer logs.Logger.Flush()
 	posup_pkg := p.Packet.(*protocol.PosUpPacket)
 
 	fBattery, _ := strconv.ParseFloat(posup_pkg.Battery, 32)
@@ -88,7 +105,7 @@ func on_posup(c *gotcp.Conn, p *ShaPacket) {
 		},
 	}
 
-	if posup_pkg.WifiCount > 2 {
+	if posup_pkg.WifiCount > 0 {
 		c.AsyncWritePacket(p, time.Second)
 		location :=
 			Report.Location{
@@ -121,7 +138,7 @@ func on_posup(c *gotcp.Conn, p *ShaPacket) {
 					},
 				}
 			req.Locations = append(req.Locations, &location)
-		} else if posup_pkg.WifiCount > 2 {
+		} else if posup_pkg.WifiCount > 0 {
 			location :=
 				Report.Location{
 					Locationtype: Report.Location_EWifi,
@@ -133,7 +150,7 @@ func on_posup(c *gotcp.Conn, p *ShaPacket) {
 					},
 				}
 			req.Locations = append(req.Locations, &location)
-		} else if posup_pkg.JzCount > 2 {
+		} else if posup_pkg.JzCount > 0 {
 			location :=
 				Report.Location{
 					Locationtype: Report.Location_EMobileCell,
@@ -148,10 +165,10 @@ func on_posup(c *gotcp.Conn, p *ShaPacket) {
 
 		}
 	}
-	log.Println("make posup proto", req)
+	logs.Logger.Info("make posup proto", req)
 	reqdata, _ := proto.Marshal(req)
 	GetServer().GetProducerManager().Send(GetConfiguration().NsqConfig.UpTopicLoction, reqdata)
-	log.Println("Send posup to Dcs", GetConfiguration().NsqConfig.UpTopicLoction)
+	logs.Logger.Info("Send posup to Dcs", GetConfiguration().NsqConfig.UpTopicLoction)
 }
 
 const (
@@ -166,6 +183,7 @@ const (
 )
 
 func on_ControlCmdrt(c *gotcp.Conn, p *ShaPacket) {
+	defer logs.Logger.Flush()
 	controlRt_pkg := p.Packet.(*protocol.ControlPacket)
 	//构造指令内容
 	t := time.Now()
@@ -207,12 +225,14 @@ func on_ControlCmdrt(c *gotcp.Conn, p *ShaPacket) {
 			},
 		},
 	}
-	log.Println("make controlrt proto", req)
+	logs.Logger.Info("make controlrt proto", req)
 	reqdata, _ := proto.Marshal(req)
 	GetServer().GetProducerManager().Send(GetConfiguration().NsqConfig.UpTopicControl, reqdata)
-	log.Println("Send controlrt to Dcs", GetConfiguration().NsqConfig.UpTopicControl, controlRt_pkg.Action)
+	logs.Logger.Info("Send controlrt to Dcs", GetConfiguration().NsqConfig.UpTopicControl, controlRt_pkg.Action)
+	redisOper.DelbyMatch(controlRt_pkg.IMEI)
 }
 func on_warnup(c *gotcp.Conn, p *ShaPacket) {
+	defer logs.Logger.Flush()
 	c.AsyncWritePacket(p, time.Second)
 
 	warnup_pkg := p.Packet.(*protocol.WarnUpPacket)
@@ -236,14 +256,15 @@ func on_warnup(c *gotcp.Conn, p *ShaPacket) {
 			},
 		},
 	}
-	log.Println("make warnup proto", req)
+	logs.Logger.Info("make warnup proto", req)
 	reqdata, _ := proto.Marshal(req)
 	GetServer().GetProducerManager().Send(GetConfiguration().NsqConfig.UpTopicControl, reqdata)
-	log.Println("Send warnup to Dcs", GetConfiguration().NsqConfig.UpTopicControl)
+	logs.Logger.Info("Send warnup to Dcs", GetConfiguration().NsqConfig.UpTopicControl)
 
 }
 func on_ReadMsg(c *gotcp.Conn, p *ShaPacket) {
 	//c.AsyncWritePacket(p, time.Second)
+	defer logs.Logger.Flush()
 
 	readMsg_pkg := p.Packet.(*protocol.ReadMsgPacket)
 
@@ -266,13 +287,14 @@ func on_ReadMsg(c *gotcp.Conn, p *ShaPacket) {
 			},
 		},
 	}
-	log.Println("make readmsg proto", req)
+	logs.Logger.Info("make readmsg proto", req)
 	reqdata, _ := proto.Marshal(req)
 	GetServer().GetProducerManager().Send(GetConfiguration().NsqConfig.UpTopicControl, reqdata)
-	log.Println("Send readmsg to Dcs", GetConfiguration().NsqConfig.UpTopicControl)
+	logs.Logger.Info("Send readmsg to Dcs", GetConfiguration().NsqConfig.UpTopicControl)
 
 }
 func on_Charge(c *gotcp.Conn, p *ShaPacket) {
+	defer logs.Logger.Flush()
 	//c.AsyncWritePacket(p, time.Second)
 
 	charge_pkg := p.Packet.(*protocol.ChargePacket)
@@ -289,16 +311,15 @@ func on_Charge(c *gotcp.Conn, p *ShaPacket) {
 			Type: Report.Command_CMT_CONN_CHARGER,
 		},
 	}
-	log.Println("make conn_charge proto", req)
+	logs.Logger.Info("make conn_charge proto", req)
 	reqdata, _ := proto.Marshal(req)
 	GetServer().GetProducerManager().Send(GetConfiguration().NsqConfig.UpTopicControl, reqdata)
-	log.Println("Send charge to Dcs", GetConfiguration().NsqConfig.UpTopicControl)
+	logs.Logger.Info("Send charge to Dcs", GetConfiguration().NsqConfig.UpTopicControl)
 
 }
 
 func (this *Callback) OnMessage(c *gotcp.Conn, p gotcp.Packet) bool {
 	shaPacket := p.(*ShaPacket)
-	//log.Println("on_message packettype", shaPacket.Type)
 	switch shaPacket.Type {
 	case protocol.Login:
 		on_login(c, shaPacket)

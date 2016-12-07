@@ -9,6 +9,7 @@ type LoginPacket struct {
 	Encryption   string
 	IMEI         string
 	SerialNumber string
+	ProtocolType string
 }
 
 //var defaultChs = []byte{'2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'}
@@ -55,6 +56,7 @@ func ParseLogin(buffer []byte) *LoginPacket {
 		Encryption:   encryption,
 		IMEI:         values[1],
 		SerialNumber: values[2],
+		ProtocolType: values[7],
 	}
 }
 
